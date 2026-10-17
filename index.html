@@ -499,6 +499,35 @@ loadStudentsFromSupabase();
 
     <div style="background:white; padding:20px; border-radius:12px; margin:16px 0;">
       <h3>My Test Marks</h3>
+      
+<div style="background:white; padding:22px; margin:18px 0; border-radius:18px; box-shadow:0 5px 20px #17255412;">
+  <h3 style="color:#172554;">UPI Fee Payment</h3>
+  <p>Pay your institute fee using any UPI app.</p>
+
+  <div style="text-align:center; padding:12px;">
+    <img src="qrscan.jpg" alt="RL-INSTITUTE UPI QR"
+      style="width:200px; max-width:100%; border-radius:12px;">
+  </div>
+
+  <p><strong>UPI ID:</strong> 8076832820@postbank</p>
+
+  <button type="button"
+    onclick="navigator.clipboard.writeText('8076832820@postbank')"
+    style="background:#172554;color:white;padding:12px 18px;border:0;border-radius:10px;">
+    Copy UPI ID
+  </button>
+
+  <p style="margin-top:16px;">After payment, submit your transaction reference (UTR) to the institute admin for verification.</p>
+
+  <label for="paymentUTR">Transaction Reference / UTR</label>
+  <input id="paymentUTR" type="text" placeholder="Enter UTR number"
+    style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:8px 0;border:1px solid #cbd5e1;border-radius:8px;">
+
+  <p style="font-size:13px;color:#64748b;">
+    UTR submission is not automatic payment confirmation. Admin verification is required.
+  </p>
+</div>
+
       <p id="myMarks">Test marks will appear here.</p>
     </div>
 
