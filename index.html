@@ -143,8 +143,19 @@
   </div>
 </main>
 </div>
-<div class="modal-backdrop" id="studentModal"><div class="modal"><div class="modal-head"><h2 id="studentModalTitle">Add student</h2><button class="btn btn-light btn-small" onclick="closeModal('studentModal')">✕</button></div><form id="studentForm"><div class="modal-content"><input type="hidden" id="editStudentId"><div class="form-grid">
-<div class="form-field"><label>Student ID *</label><input id="sId" class="field" required placeholder="e.g. RL001"></div>
+<div class="modal-backdrop" id="studentModal"><div class="modal"><div class="modal-head"><h2 id="studentModalTitle">Add student</h2><button class="btn btn-light btn-small" onclick="closeModal('studentModal')">✕</button>
+<div class="form-group">
+  <label for="sPassword">Student Login Password *</label>
+  <input
+    id="sPassword"
+    type="password"
+    minlength="8"
+    autocomplete="new-password"
+    placeholder="Enter at least 8 characters"
+    required
+  />
+</div>
+
 <div class="form-field"><label>Full name *</label><input id="sName" class="field" required placeholder="Student's name"></div>
 <div class="form-field"><label>Class / Batch *</label><input id="sClass" class="field" required placeholder="e.g. Class 12"></div>
 <div class="form-field"><label>Parent / Guardian name</label><input id="sParent" class="field" placeholder="Guardian name"></div>
