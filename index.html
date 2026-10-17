@@ -143,19 +143,17 @@
   </div>
 </main>
 </div>
-<div class="modal-backdrop" id="studentModal"><div class="modal"><div class="modal-head"><h2 id="studentModalTitle">Add student</h2><button class="btn btn-light btn-small" onclick="closeModal('studentModal')">✕</button>
-<div class="form-group">
-  <label for="sPassword">Student Login Password *</label>
-  <input
-    id="sPassword"
-    type="password"
-    minlength="8"
-    autocomplete="new-password"
-    placeholder="Enter at least 8 characters"
-    required
-  />
-</div>
-
+<div class="modal-backdrop" id="studentModal">
+  <div class="modal">
+    <form id="studentForm">
+      <div class="modal-head">
+        <h2 id="studentModalTitle">Add student</h2>
+        <button type="button" class="btn btn-light btn-small" onclick="closeModal('studentModal')">✕</button>
+      </div>
+<div class="modal-content">
+<div class="form-grid">
+<div class="form-field"><label>Student ID *</label><input id="sId" class="field" required placeholder="e.g. RL001"></div>
+<div class="form-field"><label>Student Login Password *</label><input id="sPassword" class="field" type="password" minlength="8" autocomplete="new-password" required placeholder="Minimum 8 characters"></div>
 <div class="form-field"><label>Full name *</label><input id="sName" class="field" required placeholder="Student's name"></div>
 <div class="form-field"><label>Class / Batch *</label><input id="sClass" class="field" required placeholder="e.g. Class 12"></div>
 <div class="form-field"><label>Parent / Guardian name</label><input id="sParent" class="field" placeholder="Guardian name"></div>
@@ -163,7 +161,7 @@
 <div class="form-field"><label>Monthly fee (₹) *</label><input id="sFee" class="field" required type="number" min="0" value="1000"></div>
 <div class="form-field"><label>Joining date</label><input id="sJoin" class="field" type="date"></div>
 <div class="form-field"><label>Status</label><select id="sStatus" class="field"><option>Active</option><option>Inactive</option></select></div>
-<div class="form-field full"><label>Notes (optional)</label><textarea id="sNotes" rows="2" placeholder="Academic notes or other non-sensitive details"></textarea></div><div class="form-field full"><div class="notice"><b>Student login:</b> Do not enter or save a password in this local form. After secure authentication is configured, create the student account in the authentication provider and link it to this Student ID. Students must have read-only access to their own records.</div></div>
+<div class="form-field full"><label>Notes (optional)</label><textarea id="sNotes" rows="2" placeholder="Academic notes or other non-sensitive details"></textarea></div>
 </div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeModal('studentModal')">Cancel</button><button type="submit" class="btn btn-primary">Save student</button></div></form></div></div>
 <div class="modal-backdrop" id="paymentModal"><div class="modal"><div class="modal-head"><h2>Record fee payment</h2><button class="btn btn-light btn-small" onclick="closeModal('paymentModal')">✕</button></div><form id="paymentForm"><div class="modal-content"><div class="form-grid"><div class="form-field full"><label>Student *</label><select id="pStudent" class="field" required></select></div><div class="form-field"><label>Amount paid (₹) *</label><input id="pAmount" class="field" type="number" min="1" required></div><div class="form-field"><label>Payment date *</label><input id="pDate" class="field" type="date" required></div><div class="form-field"><label>Payment method</label><select id="pMethod" class="field"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Other</option></select></div><div class="form-field"><label>Month covered *</label><input id="pMonth" class="field" type="month" required></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeModal('paymentModal')">Cancel</button><button class="btn btn-primary">Save payment</button></div></form></div></div>
 <div class="modal-backdrop" id="markModal"><div class="modal"><div class="modal-head"><h2>Enter test marks</h2><button class="btn btn-light btn-small" onclick="closeModal('markModal')">✕</button></div><form id="markForm"><div class="modal-content"><div class="form-grid"><div class="form-field full"><label>Student *</label><select id="mStudent" class="field" required></select></div><div class="form-field"><label>Test / Subject *</label><input id="mTest" class="field" required placeholder="e.g. Economics Unit Test"></div><div class="form-field"><label>Date *</label><input id="mDate" class="field" type="date" required></div><div class="form-field"><label>Marks obtained *</label><input id="mScore" class="field" type="number" min="0" required></div><div class="form-field"><label>Total marks *</label><input id="mTotal" class="field" type="number" min="1" required></div><div class="form-field full"><label>Teacher remark</label><textarea id="mRemark" rows="2" placeholder="Short constructive feedback"></textarea></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeModal('markModal')">Cancel</button><button class="btn btn-primary">Save marks</button></div></form></div></div>
@@ -292,7 +290,74 @@ function openStudentModal(id=''){document.getElementById('studentForm').reset();
 function editStudent(id){openStudentModal(id)}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')}));
-document.getElementById('studentForm').addEventListener('submit',e=>{e.preventDefault();const old=document.getElementById('editStudentId').value;const id=document.getElementById('sId').value.trim();if(!old&&db.students.some(s=>s.id.toLowerCase()===id.toLowerCase())){toast('Student ID already exists. Use a unique ID.');return}const obj={id,name:document.getElementById('sName').value.trim(),className:document.getElementById('sClass').value.trim(),parent:document.getElementById('sParent').value.trim(),phone:document.getElementById('sPhone').value.replace(/\D/g,''),fee:Number(document.getElementById('sFee').value),joinDate:document.getElementById('sJoin').value,status:document.getElementById('sStatus').value,notes:document.getElementById('sNotes').value.trim()};if(old)db.students=db.students.map(s=>s.id===old?obj:s);else db.students.push(obj);persist();closeModal('studentModal');toast(old?'Student updated':'Student added successfully')});
+
+document.getElementById('studentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const old = document.getElementById('editStudentId').value;
+  const id = document.getElementById('sId').value.trim();
+  const password = document.getElementById('sPassword').value;
+
+  if (old) {
+    toast('Student editing is not connected to Supabase yet. No changes saved.');
+    return;
+  }
+
+  if (db.students.some(s => s.id.toLowerCase() === id.toLowerCase())) {
+    toast('Student ID already exists. Use a unique ID.');
+    return;
+  }
+
+  if (!password || password.length < 8) {
+    toast('Password must be at least 8 characters.');
+    return;
+  }
+
+  const button = e.submitter;
+  if (button) button.disabled = true;
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      throw new Error('Admin session expired. Please log in again.');
+    }
+
+    const student = {
+      studentId: id,
+      fullName: document.getElementById('sName').value.trim(),
+      className: document.getElementById('sClass').value.trim(),
+      parentName: document.getElementById('sParent').value.trim(),
+      parentPhone: document.getElementById('sPhone').value.replace(/\D/g, ''),
+      monthlyFee: Number(document.getElementById('sFee').value || 0),
+      joiningDate: document.getElementById('sJoin').value || null,
+      status: document.getElementById('sStatus').value,
+      notes: document.getElementById('sNotes').value.trim(),
+      password
+    };
+
+    const { data, error } = await supabaseClient.functions.invoke(
+      'create-student',
+      { body: student }
+    );
+
+    if (error) throw error;
+    if (data?.error || !data?.success) {
+      throw new Error(data?.error || 'Student account could not be created.');
+    }
+
+    document.getElementById('studentForm').reset();
+    persist();
+    closeModal('studentModal');
+    toast('Student account created successfully.');
+  } catch (error) {
+    console.error('Create student failed:', error);
+    toast(error.message || 'Could not create student account.');
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
 function deleteStudent(id){if(!confirm('Delete this student? Associated marks, attendance and payments will remain in the local data unless you remove them separately.'))return;db.students=db.students.filter(s=>s.id!==id);persist();toast('Student deleted')}
 function renderAttendance(){const date=document.getElementById('attendanceDate').value||today();if(!document.getElementById('attendanceDate').value)document.getElementById('attendanceDate').value=today();attendanceDraft={...(db.attendance[date]||{})};document.getElementById('attendanceTable').innerHTML=db.students.map(s=>{const st=attendanceDraft[s.id]||'';return `<tr><td><div class="student-cell"><div class="student-avatar">${esc(initials(s.name))}</div><div><div class="student-name">${esc(s.name)}</div><div class="student-id">${esc(s.id)}</div></div></div></td><td>${esc(s.className)}</td><td><select class="field" style="max-width:160px" onchange="attendanceDraft['${esc(s.id)}']=this.value"><option value="">Not marked</option><option ${st==='Present'?'selected':''}>Present</option><option ${st==='Absent'?'selected':''}>Absent</option><option ${st==='Late'?'selected':''}>Late</option><option ${st==='Leave'?'selected':''}>Leave</option></select></td></tr>`}).join('');document.getElementById('attendanceEmpty').style.display=db.students.length?'none':'block';document.getElementById('attendanceSub').textContent=new Date(date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});document.getElementById('attendanceCounts').textContent=db.students.length+' students'}
 function markAll(status){db.students.forEach(s=>attendanceDraft[s.id]=status);document.querySelectorAll('#attendanceTable select').forEach(el=>{el.value=status})}
