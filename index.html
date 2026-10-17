@@ -438,7 +438,39 @@ async function loadStudentsFromSupabase() {
     toast('Students load nahi hue: ' + error.message);
   }
 }
+async function loadStudentDashboard(studentId) {
+  if (!studentId) {
+    throw new Error('Student ID profile mein nahi mili.');
+  }
 
+  const { data: student, error: studentError } =
+    await supabaseClient
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .single();
+
+  if (studentError) throw studentError;
+
+  document.getElementById('studentWelcome').textContent =
+    student.full_name || 'Student';
+
+  document.getElementById('myStudentId').textContent =
+    student.id || '—';
+
+  document.getElementById('myStudentClass').textContent =
+    student.class_name || '—';
+
+  document.getElementById('myFees').textContent =
+    'Monthly fee: ₹' +
+    Number(student.monthly_fee || 0).toLocaleString('en-IN');
+
+  document.getElementById('myAttendance').textContent =
+    'Attendance records load karne ke liye next step mein connection add karenge.';
+
+  document.getElementById('myMarks').textContent =
+    'Test marks load karne ke liye next step mein connection add karenge.';
+}
 loadStudentsFromSupabase();
 </script>
 
