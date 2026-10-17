@@ -185,8 +185,60 @@ document.querySelectorAll('[data-login-role]').forEach(btn=>btn.addEventListener
   document.getElementById('loginIdLabel').textContent=labels[selectedLoginRole];
   document.getElementById('loginId').placeholder=selectedLoginRole==='admin'?'Enter Institute ID':selectedLoginRole==='student'?'Enter Student ID':'Enter Parent email';
 }));
-document.getElementById('loginForm').addEventListener('submit', async e => {
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  const notice = document.getElementById('loginNotice');
+  const email = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  notice.textContent = 'Signing in...';
+
+  try {
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+    if (error) throw error;
+
+    const { data: profile, error: profileError } =
+      await supabaseClient
+        .from('profiles')
+        .select('role, login_id, student_id')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+    if (profileError || !profile) {
+      await supabaseClient.auth.signOut();
+      throw new Error(
+        'Profile not found. Ask the institute administrator to check your account.'
+      );
+    }
+
+    if (profile.role !== selectedLoginRole) {
+      await supabaseClient.auth.signOut();
+      throw new Error('This account does not match the selected login type.');
+    }
+
+    if (profile.role !== 'admin') {
+      await supabaseClient.auth.signOut();
+      throw new Error(
+        'Student and parent dashboards are not connected yet.'
+      );
+    }
+
+    document.getElementById('loginGate').classList.add('hidden');
+    document.getElementById('appRoot').style.display = 'flex';
+    notice.textContent = 'Admin login successful.';
+
+    await loadAdminData();
+  } catch (error) {
+    notice.textContent = 'Login failed: ' + error.message;
+  }
+});
 
   const notice = document.getElementById('loginNotice');
   const email = document.getElementById('loginId').value.trim();
@@ -210,7 +262,12 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appRoot').style.display = 'flex';
 });
-document.getElementById('previewAccess').addEventListener('click',()=>{
+
+document.getElementById('previewAccess').addEventListener('click', () => {
+  // Local preview disabled for live portal
+  toast('Local preview is disabled.');
+});
+
   if(!confirm('Open local prototype? This preview has no secure login and stores data only in this browser. Do not enter real student or parent information.')) return;
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appRoot').style.display='flex';
