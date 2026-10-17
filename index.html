@@ -400,6 +400,10 @@ function restoreData(e){const file=e.target.files[0];if(!file)return;const reade
 function clearData(){if(confirm('Are you sure? This permanently clears RL-INSTITUTE records from this browser. Download a backup first if needed.')){db={students:[],payments:[],marks:[],attendance:{},settings:db.settings||{name:'RL-INSTITUTE',tagline:'Learn • Improve • Achieve',phone:''}};persist();toast('Local records cleared')}}
 function loadDemo(){if(db.students.length&&!confirm('Replace current records with fictional demo data? Download a backup first if needed.'))return;const ymd=today();db={settings:db.settings||{name:'RL-INSTITUTE',tagline:'Learn • Improve • Achieve',phone:''},students:[{id:'RL001',name:'Aarav Sharma',className:'Class 12',parent:'Rajesh Sharma',phone:'919876543210',fee:1500,joinDate:ymd,status:'Active',notes:''},{id:'RL002',name:'Ananya Verma',className:'Class 11',parent:'Sunita Verma',phone:'919876543211',fee:1200,joinDate:ymd,status:'Active',notes:''},{id:'RL003',name:'Vivaan Gupta',className:'Class 10',parent:'Amit Gupta',phone:'919876543212',fee:1000,joinDate:ymd,status:'Active',notes:''}],payments:[{receipt:'RL-1001001',studentId:'RL001',amount:1500,date:ymd,method:'UPI',month:new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'})},{receipt:'RL-1001002',studentId:'RL003',amount:500,date:ymd,method:'Cash',month:new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'})}],marks:[{id:'T-demo1',studentId:'RL001',test:'Economics Unit Test',date:ymd,score:42,total:50,remark:'Good understanding. Practise application-based questions.'},{id:'T-demo2',studentId:'RL002',test:'English Writing Skills',date:ymd,score:36,total:40,remark:'Clear structure and improving expression.'}],attendance:{[ymd]:{RL001:'Present',RL002:'Present',RL003:'Absent'}}};persist();toast('Fictional demo data loaded')}
 document.getElementById('attendanceDate').value=today();document.getElementById('pDate').value=today();refreshAll();
+document.getElementById('attendanceDate').value=today();
+document.getElementById('pDate').value=today();
+refreshAll();
+</script>
 </script>
 
 <!-- STUDENT DASHBOARD -->
