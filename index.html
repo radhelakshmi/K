@@ -160,7 +160,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient = window.supabase.createClient(
-  "https://brlptuyehzdrduslnzeg.supabase.co/rest/v1/",
+  "https://brlptuyehzdrduslnzeg.supabase.co",
   "sb_publishable_qzyAVRpJJ69mHw9Y3PQ30w_LsIgWgg2"
 );
 const STORE_KEY='rlInstitutePortalV1';
@@ -176,7 +176,6 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));document.querySelectorAll('#nav button[data-page],.sidebar .nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const names={dashboard:'Dashboard',students:'Students',attendance:'Attendance',fees:'Fee management',marks:'Marks & tests',reports:'Report cards',reminders:'WhatsApp reminders',settings:'Settings & backup'};document.getElementById('topTitle').textContent=names[page]||page;document.getElementById('crumb').textContent=names[page]||page;document.getElementById('sidebar').classList.remove('open');if(page==='reports')renderReport();if(page==='reminders')renderReminder();refreshAll()}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.getElementById('menuToggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
-document.getElementById('todayBtn').addEventListener('click',()=>{
 // Login screen: deliberately does not store or validate passwords locally.
 let selectedLoginRole = 'admin';
 document.querySelectorAll('[data-login-role]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -219,7 +218,8 @@ document.getElementById('previewAccess').addEventListener('click',()=>{
 });
 document.getElementById('appRoot').style.display='none';
 
-document.getElementById('attendanceDate').value=today();showPage('attendance')});
+document.getElementById('attendanceDate').value = today();
+showPage('attendance');
 function selectedFeeMonth(){return document.getElementById('feeMonth')?.value||monthKey(today())}
 function paymentMonth(p){return p.monthKey||((/^\d{4}-\d{2}$/.test(String(p.month||'')))?p.month:monthKey(p.date))}
 function feePaid(sid,month=selectedFeeMonth()){return db.payments.filter(p=>p.studentId===sid&&paymentMonth(p)===month).reduce((a,p)=>a+Number(p.amount||0),0)}
