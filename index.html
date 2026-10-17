@@ -273,7 +273,16 @@ if (loginRole === 'admin') {
 } else {
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('studentDashboard').style.display = 'block';
-  notice.textContent = 'Student login successful.';
+
+  try {
+    await loadStudentDashboard(profile.student_id);
+    notice.textContent = 'Student login successful.';
+  } catch (dashboardError) {
+    console.error('STUDENT DASHBOARD ERROR:', dashboardError);
+    notice.textContent =
+      'Login successful, but dashboard could not load: ' +
+      dashboardError.message;
+  }
 }
 
   } catch (error) {
