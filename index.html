@@ -157,7 +157,12 @@
 <div class="modal-backdrop" id="paymentModal"><div class="modal"><div class="modal-head"><h2>Record fee payment</h2><button class="btn btn-light btn-small" onclick="closeModal('paymentModal')">✕</button></div><form id="paymentForm"><div class="modal-content"><div class="form-grid"><div class="form-field full"><label>Student *</label><select id="pStudent" class="field" required></select></div><div class="form-field"><label>Amount paid (₹) *</label><input id="pAmount" class="field" type="number" min="1" required></div><div class="form-field"><label>Payment date *</label><input id="pDate" class="field" type="date" required></div><div class="form-field"><label>Payment method</label><select id="pMethod" class="field"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Other</option></select></div><div class="form-field"><label>Month covered *</label><input id="pMonth" class="field" type="month" required></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeModal('paymentModal')">Cancel</button><button class="btn btn-primary">Save payment</button></div></form></div></div>
 <div class="modal-backdrop" id="markModal"><div class="modal"><div class="modal-head"><h2>Enter test marks</h2><button class="btn btn-light btn-small" onclick="closeModal('markModal')">✕</button></div><form id="markForm"><div class="modal-content"><div class="form-grid"><div class="form-field full"><label>Student *</label><select id="mStudent" class="field" required></select></div><div class="form-field"><label>Test / Subject *</label><input id="mTest" class="field" required placeholder="e.g. Economics Unit Test"></div><div class="form-field"><label>Date *</label><input id="mDate" class="field" type="date" required></div><div class="form-field"><label>Marks obtained *</label><input id="mScore" class="field" type="number" min="0" required></div><div class="form-field"><label>Total marks *</label><input id="mTotal" class="field" type="number" min="1" required></div><div class="form-field full"><label>Teacher remark</label><textarea id="mRemark" rows="2" placeholder="Short constructive feedback"></textarea></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeModal('markModal')">Cancel</button><button class="btn btn-primary">Save marks</button></div></form></div></div>
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const supabaseClient = window.supabase.createClient(
+  "https://brlptuyehzdrduslnzeg.supabase.co/rest/v1/",
+  "sb_publishable_qzyAVRpJJ69mHw9Y3PQ30w_LsIgWgg2"
+);
 const STORE_KEY='rlInstitutePortalV1';
 const today=()=>new Date().toISOString().slice(0,10);
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
@@ -181,9 +186,30 @@ document.querySelectorAll('[data-login-role]').forEach(btn=>btn.addEventListener
   document.getElementById('loginIdLabel').textContent=labels[selectedLoginRole];
   document.getElementById('loginId').placeholder=selectedLoginRole==='admin'?'Enter Institute ID':selectedLoginRole==='student'?'Enter Student ID':'Enter Parent email';
 }));
-document.getElementById('loginForm').addEventListener('submit',e=>{
+document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  document.getElementById('loginNotice').innerHTML='<b>Authentication is not connected yet.</b> No credentials were checked or saved. Follow SETUP_GUIDE.md to configure real Supabase Auth and role permissions. Do not use real student records in this preview.';
+
+  const notice = document.getElementById('loginNotice');
+  const email = document.getElementById('loginId').value.trim();
+  const password = document.querySelector(
+    '#loginForm input[type="password"]'
+  ).value;
+
+  notice.textContent = 'Signing in...';
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    notice.textContent = 'Login failed: ' + error.message;
+    return;
+  }
+
+  notice.textContent = 'Login successful!';
+  document.getElementById('loginGate').classList.add('hidden');
+  document.getElementById('appRoot').style.display = 'flex';
 });
 document.getElementById('previewAccess').addEventListener('click',()=>{
   if(!confirm('Open local prototype? This preview has no secure login and stores data only in this browser. Do not enter real student or parent information.')) return;
