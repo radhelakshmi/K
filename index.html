@@ -176,15 +176,32 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));document.querySelectorAll('#nav button[data-page],.sidebar .nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const names={dashboard:'Dashboard',students:'Students',attendance:'Attendance',fees:'Fee management',marks:'Marks & tests',reports:'Report cards',reminders:'WhatsApp reminders',settings:'Settings & backup'};document.getElementById('topTitle').textContent=names[page]||page;document.getElementById('crumb').textContent=names[page]||page;document.getElementById('sidebar').classList.remove('open');if(page==='reports')renderReport();if(page==='reminders')renderReminder();refreshAll()}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.getElementById('menuToggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
-// Login screen: deliberately does not store or validate passwords locally.
+
 let selectedLoginRole = 'admin';
-document.querySelectorAll('[data-login-role]').forEach(btn=>btn.addEventListener('click',()=>{
-  selectedLoginRole=btn.dataset.loginRole;
-  document.querySelectorAll('[data-login-role]').forEach(b=>b.classList.toggle('active',b===btn));
-  const labels={admin:'Institute ID / registered email',student:'Student ID / registered email',parent:'Parent registered email'};
-  document.getElementById('loginIdLabel').textContent=labels[selectedLoginRole];
-  document.getElementById('loginId').placeholder=selectedLoginRole==='admin'?'Enter Institute ID':selectedLoginRole==='student'?'Enter Student ID':'Enter Parent email';
-}));
+
+document.querySelectorAll('[data-login-role]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedLoginRole = btn.dataset.loginRole;
+
+    document.querySelectorAll('[data-login-role]').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+
+    const labels = {
+      admin: 'Institute ID / registered email',
+      student: 'Student ID / registered email',
+      parent: 'Parent registered email'
+    };
+
+    document.getElementById('loginIdLabel').textContent =
+      labels[selectedLoginRole];
+
+    document.getElementById('loginId').placeholder =
+      selectedLoginRole === 'admin' ? 'Enter registered email' :
+      selectedLoginRole === 'student' ? 'Enter Student ID' :
+      'Enter Parent email';
+  });
+});
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -192,17 +209,28 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const notice = document.getElementById('loginNotice');
   const email = document.getElementById('loginId').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const submitButton = document.querySelector(
+    '#loginForm button[type="submit"]'
+  );
 
   notice.textContent = 'Signing in...';
+  submitButton.disabled = true;
 
   try {
+    if (selectedLoginRole !== 'admin') {
+      throw new Error('Student and parent login are not ready yet.');
+    }
+
     const { data, error } =
       await supabaseClient.auth.signInWithPassword({
-        email,
-        password
+        email: email,
+        password: password
       });
 
     if (error) throw error;
+    if (!data.user) {
+      throw new Error('No authenticated user returned.');
+    }
 
     const { data: profile, error: profileError } =
       await supabaseClient
@@ -211,69 +239,32 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         .eq('user_id', data.user.id)
         .maybeSingle();
 
-    if (profileError || !profile) {
-      await supabaseClient.auth.signOut();
-      throw new Error(
-        'Profile not found. Ask the institute administrator to check your account.'
-      );
-    }
+    if (profileError) throw profileError;
 
-    if (profile.role !== selectedLoginRole) {
+    if (!profile || profile.role !== 'admin') {
       await supabaseClient.auth.signOut();
-      throw new Error('This account does not match the selected login type.');
-    }
-
-    if (profile.role !== 'admin') {
-      await supabaseClient.auth.signOut();
-      throw new Error(
-        'Student and parent dashboards are not connected yet.'
-      );
+      throw new Error('Admin profile missing or role is not admin.');
     }
 
     document.getElementById('loginGate').classList.add('hidden');
     document.getElementById('appRoot').style.display = 'flex';
-    notice.textContent = 'Admin login successful.';
 
-    await loadAdminData();
+    notice.textContent =
+      'Login verified. Student records are not yet connected to Supabase.';
+
   } catch (error) {
+    console.error('LOGIN ERROR:', error);
     notice.textContent = 'Login failed: ' + error.message;
+  } finally {
+    submitButton.disabled = false;
   }
-});
-
-  const notice = document.getElementById('loginNotice');
-  const email = document.getElementById('loginId').value.trim();
-  const password = document.querySelector(
-    '#loginForm input[type="password"]'
-  ).value;
-
-  notice.textContent = 'Signing in...';
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
-
-  if (error) {
-    notice.textContent = 'Login failed: ' + error.message;
-    return;
-  }
-
-  notice.textContent = 'Login successful!';
-  document.getElementById('loginGate').classList.add('hidden');
-  document.getElementById('appRoot').style.display = 'flex';
 });
 
 document.getElementById('previewAccess').addEventListener('click', () => {
-  // Local preview disabled for live portal
   toast('Local preview is disabled.');
 });
 
-  if(!confirm('Open local prototype? This preview has no secure login and stores data only in this browser. Do not enter real student or parent information.')) return;
-  document.getElementById('loginGate').classList.add('hidden');
-  document.getElementById('appRoot').style.display='flex';
-  toast('Local preview opened — authentication is not enabled');
-});
-document.getElementById('appRoot').style.display='none';
+document.getElementById('appRoot').style.display = 'none';
 
 document.getElementById('attendanceDate').value = today();
 showPage('attendance');
