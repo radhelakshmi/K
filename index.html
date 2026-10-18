@@ -461,9 +461,45 @@ async function loadStudentDashboard(studentId) {
   document.getElementById('myStudentClass').textContent =
     student.class_name || '—';
 
-  document.getElementById('myFees').textContent =
-    'Monthly fee: ₹' +
-    Number(student.monthly_fee || 0).toLocaleString('en-IN');
+  
+const { data: feeRows, error: feeError } =
+  await supabaseClient
+    .from('fee_payments')
+    .select('receipt_number, amount, payment_date, payment_method, fee_month')
+    .eq('student_id', studentId)
+    .order('payment_date', { ascending: false });
+
+if (feeError) throw feeError;
+
+const feeBox = document.getElementById('myFees');
+const monthlyFee = Number(student.monthly_fee || 0);
+
+const safeText = value =>
+  String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+
+feeBox.innerHTML =
+  `<div style="padding:12px 0">
+    <strong>Monthly Fee: ₹${monthlyFee.toLocaleString('en-IN')}</strong>
+  </div>
+  <h4>Payment History</h4>` +
+  (feeRows.length
+    ? feeRows.map(row => `
+        <div style="padding:12px 0;border-bottom:1px solid #e2e8f0">
+          <strong>₹${Number(row.amount).toLocaleString('en-IN')}</strong><br>
+          Fee Month: ${safeText(row.fee_month)}<br>
+          Payment Date: ${safeText(row.payment_date)}<br>
+          Method: ${safeText(row.payment_method)}<br>
+          Receipt: ${safeText(row.receipt_number)}
+        </div>
+      `).join('')
+    : '<p>No payment history available yet.</p>');
+
 
   
 const { data: attendanceRows, error: attendanceError } =
@@ -522,6 +558,52 @@ document.getElementById('myMarks').innerHTML =
       }).join('')
     : 'No test marks available yet.';
 }
+
+const monthInput = document.getElementById('paymentMonth');
+if (monthInput && !monthInput.value) {
+  monthInput.value = new Date().toISOString().slice(0, 7);
+}
+
+document.getElementById('submitPaymentRequest').onclick = async () => {
+  const message = document.getElementById('paymentRequestMessage');
+  const utr = document.getElementById('paymentUTR').value.trim();
+  const amount = Number(document.getElementById('paymentAmount').value);
+  const month = document.getElementById('paymentMonth').value;
+
+  if (!utr || !Number.isFinite(amount) || amount <= 0 || !month) {
+    message.textContent = 'Please enter UTR, valid amount and fee month.';
+    return;
+  }
+
+  const button = document.getElementById('submitPaymentRequest');
+  button.disabled = true;
+  message.textContent = 'Submitting request...';
+
+  try {
+    const { error } = await supabaseClient
+      .from('payment_requests')
+      .insert({
+        student_id: studentId,
+        utr: utr,
+        amount: amount,
+        fee_month: month + '-01',
+        status: 'Pending'
+      });
+
+    if (error) throw error;
+
+    message.textContent =
+      'Request submitted. Payment will remain Pending until admin verification.';
+    document.getElementById('paymentUTR').value = '';
+    document.getElementById('paymentAmount').value = '';
+  } catch (error) {
+    console.error('PAYMENT REQUEST ERROR:', error);
+    message.textContent = 'Submission failed: ' + error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
+
 loadStudentsFromSupabase();
 </script>
 
