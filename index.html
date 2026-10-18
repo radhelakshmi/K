@@ -465,8 +465,34 @@ async function loadStudentDashboard(studentId) {
     'Monthly fee: ₹' +
     Number(student.monthly_fee || 0).toLocaleString('en-IN');
 
-  document.getElementById('myAttendance').textContent =
-    'Attendance records load karne ke liye next step mein connection add karenge.';
+  
+const { data: attendanceRows, error: attendanceError } =
+  await supabaseClient
+    .from('attendance')
+    .select('attendance_date, status')
+    .eq('student_id', studentId)
+    .order('attendance_date', { ascending: false });
+
+if (attendanceError) throw attendanceError;
+
+const totalDays = attendanceRows.length;
+const presentDays = attendanceRows.filter(
+  row => row.status.toLowerCase() === 'present'
+).length;
+
+const percentage = totalDays
+  ? Math.round((presentDays / totalDays) * 100)
+  : 0;
+
+document.getElementById('myAttendance').innerHTML =
+  `<strong>${percentage}%</strong> attendance<br>
+   Total records: ${totalDays}<br>
+   Present: ${presentDays}<br><br>` +
+  (totalDays
+    ? attendanceRows.slice(0, 10).map(row =>
+        `${row.attendance_date} — ${row.status}`
+      ).join('<br>')
+    : 'No attendance records yet.');
 
   document.getElementById('myMarks').textContent =
     'Test marks load karne ke liye next step mein connection add karenge.';
