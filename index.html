@@ -494,8 +494,33 @@ document.getElementById('myAttendance').innerHTML =
       ).join('<br>')
     : 'No attendance records yet.');
 
-  document.getElementById('myMarks').textContent =
-    'Test marks load karne ke liye next step mein connection add karenge.';
+  
+const { data: marksRows, error: marksError } =
+  await supabaseClient
+    .from('test_marks')
+    .select('test_name, test_date, marks_obtained, total_marks, teacher_remark')
+    .eq('student_id', studentId)
+    .order('test_date', { ascending: false });
+
+if (marksError) throw marksError;
+
+document.getElementById('myMarks').innerHTML =
+  marksRows.length
+    ? marksRows.map(row => {
+        const score = Number(row.marks_obtained);
+        const total = Number(row.total_marks);
+        const percent = total > 0
+          ? Math.round(score / total * 100)
+          : 0;
+
+        return `<div style="padding:10px 0;border-bottom:1px solid #e2e8f0">
+          <strong>${row.test_name}</strong><br>
+          Date: ${row.test_date}<br>
+          Marks: ${score} / ${total} (${percent}%)<br>
+          Remark: ${row.teacher_remark || '—'}
+        </div>`;
+      }).join('')
+    : 'No test marks available yet.';
 }
 loadStudentsFromSupabase();
 </script>
